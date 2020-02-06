@@ -82,23 +82,22 @@ if len(sys.argv) > 4:
 			f.close()
 
 WARN_0 = list() # list of userids that have not attacked AT ALL in last raid
-for f in range(len(sys.argv)-1, len(sys.argv)):
-	with open(sys.argv[f], 'rb') as f:
-		reader = csv.reader(f)
-		next(reader, None) # Skip the header
-		prevuser = None
-		for row in reader:
-			# Store user IDs (not names) that have not attacked at least MIN_ATTACKS
-			# Also store names seen for this user ID (in case user has changed its nick)
-			if prevuser != row[1]:
-				prevuser = row[1]
-				if int(row[2]) == 0:
-					userid = row[1]
-					# If user was not already in kick list, and not already in warn list, add it
-					if userid not in WARN_0 and userid not in KICK_0:
-						WARN_0.append (userid)
-		f.close()
 
+with open(sys.argv[len(sys.argv)-1], 'rb') as f:
+	reader = csv.reader(f)
+	next(reader, None) # Skip the header
+	prevuser = None
+	for row in reader:
+		# Store user IDs (not names) that have not attacked at least MIN_ATTACKS
+		# Also store names seen for this user ID (in case user has changed its nick)
+		if prevuser != row[1]:
+			prevuser = row[1]
+			if int(row[2]) == 0:
+				userid = row[1]
+				# If user was not already in kick list, and not already in warn list, add it
+				if userid not in WARN_0 and userid not in KICK_0:
+					WARN_0.append (userid)
+	f.close()
 
 KICK = list() # list of userids that have not attacked at least KICK_AT
 WARN = list() # list of userids that deserve a warning
@@ -108,6 +107,7 @@ for userid, v in CNT_min_attacks.iteritems():
 	if v == WARN_AT and userid not in KICK_0 and userid not in WARN_0:
 		WARN.append (userid)
 
+print ""
 if len(KICK_0) > 0:
 	print "Users to be kicked because double 0 attack."
 	print "---"
@@ -188,9 +188,8 @@ if len(MOHACA) > 0:
 		print "User: " + str(userid) +" - Nick: "+ ", ".join (CNT_names[userid])
 	print ""
 if len(JUKK) > 0:
-	print "Users that attacked JUKK's amrs/hands armor:"
+	print "Users that attacked JUKK's arms/hands armor:"
 	print "--"
 	for userid in JUKK:
 		print "User: " + str(userid) +" - Nick: "+ ", ".join (CNT_names[userid])
 	print ""
-
