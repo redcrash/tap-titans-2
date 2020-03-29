@@ -28,7 +28,6 @@ CNT_names = {}       # dictionary [userid->list(nicks)]
 for f in range(3, len(sys.argv)):
 	with open(sys.argv[f], 'rb') as f:
 		reader = csv.reader(f)
-		next(reader, None) # Skip the header
 		for row in reader:
 			userid = row[1]
 			if row[0] in CNT_names:
@@ -41,20 +40,39 @@ for f in range(3, len(sys.argv)):
 for f in range(3, len(sys.argv)):
 	with open(sys.argv[f], 'rb') as f:
 		reader = csv.reader(f)
-		next(reader, None) # Skip the header
-		prevuser = None
 		for row in reader:
-			# Store user IDs (not names) that have not attacked at least MIN_ATTACKS
-			# Also store names seen for this user ID (in case user has changed its nick)
-			if prevuser != row[1]:
-				prevuser = row[1]
-				if int(row[2]) < MIN_ATTACKS:
-					userid = row[1]
-					if userid in CNT_min_attacks:
-						CNT_min_attacks[ userid ] = CNT_min_attacks[ userid ] + 1
-					else:
-						CNT_min_attacks[ userid ] = 1
+			# Use row[3] to identify when a new player is found
+			if int(row[2]) < MIN_ATTACKS and int(row[3]) == 0:
+				userid = row[1]
+				if userid in CNT_min_attacks:
+					CNT_min_attacks[ userid ] = CNT_min_attacks[ userid ] + 1
+				else:
+					CNT_min_attacks[ userid ] = 1
 		f.close()
+
+# Check promotions to Captain
+# Knights are promoted to Captain if a player reaches the max number of attacks in a raid
+# for 3 consecutive raids (with a grace of 1 turn)
+
+CPT_names = {}       # dictionary [userid->list(nicks)]
+
+for i in range(3, len(sys.argv)):
+    threshold = 0
+    with open(sys.argv[i], 'rb') as f:
+            reader = csv.reader(f)
+            maxAttacks = 0
+            for row in reader:
+                maxAttacks = max(maxAttacks, int(row[2]))
+    threshold = (int(maxAttacks / 4) - 1) * 4
+    with open(sys.argv[i], 'rb') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                if int(row[2]) >= threshold and int(row[3]) == 0: # row[3] is the attack number, ignore if > 0
+                    if row[1] not in CPT_names:
+                        CPT_names[row[1]] = 1
+                    else:
+                        CPT_names[row[1]] = CPT_names[row[1]] + 1
+
 
 # Double 0 attack analysis
 CNT_0_attacks = {} # dictionary [userid->#attacks] that have not surpassed MIN_ATTACKS at least 1
@@ -64,39 +82,28 @@ if len(sys.argv) > 4:
 	for f in range(len(sys.argv)-2, len(sys.argv)):
 		with open(sys.argv[f], 'rb') as f:
 			reader = csv.reader(f)
-			next(reader, None) # Skip the header
-			prevuser = None
 			for row in reader:
-				# Store user IDs (not names) that have not attacked at least MIN_ATTACKS
-				# Also store names seen for this user ID (in case user has changed its nick)
-				if prevuser != row[1]:
-					prevuser = row[1]
-					if int(row[2]) == 0:
-						userid = row[1]
-						if userid in CNT_0_attacks:
-							CNT_0_attacks[ userid ] = CNT_0_attacks[ userid ] + 1
-							if CNT_0_attacks[ userid ] == 2:
-								KICK_0.append (userid)
-						else:
-							CNT_0_attacks[ userid ] = 1
+				# Use row[3] to identify when a new player is found
+				if int(row[2]) == 0 and int(row[3]) == 0:
+					userid = row[1]
+					if userid in CNT_0_attacks:
+						CNT_0_attacks[ userid ] = CNT_0_attacks[ userid ] + 1
+						if CNT_0_attacks[ userid ] == 2:
+							KICK_0.append (userid)
+					else:
+						CNT_0_attacks[ userid ] = 1
 			f.close()
 
 WARN_0 = list() # list of userids that have not attacked AT ALL in last raid
 
 with open(sys.argv[len(sys.argv)-1], 'rb') as f:
 	reader = csv.reader(f)
-	next(reader, None) # Skip the header
-	prevuser = None
 	for row in reader:
-		# Store user IDs (not names) that have not attacked at least MIN_ATTACKS
-		# Also store names seen for this user ID (in case user has changed its nick)
-		if prevuser != row[1]:
-			prevuser = row[1]
-			if int(row[2]) == 0:
-				userid = row[1]
-				# If user was not already in kick list, and not already in warn list, add it
-				if userid not in WARN_0 and userid not in KICK_0:
-					WARN_0.append (userid)
+		# Use row[3] to identify when a new player is found
+		if int(row[2]) == 0 and int(row[3]) == 0:
+			userid = row[1]
+			if userid not in WARN_0 and userid not in KICK_0:
+				WARN_0.append (userid)
 	f.close()
 
 KICK = list() # list of userids that have not attacked at least KICK_AT
@@ -106,6 +113,13 @@ for userid, v in CNT_min_attacks.iteritems():
 		KICK.append (userid)
 	if v == WARN_AT and userid not in KICK_0 and userid not in WARN_0:
 		WARN.append (userid)
+
+print ""
+print "Users that shall be promoted to Captain:"
+print "---"
+for userid, value in CPT_names.iteritems():
+    if value >= 3:
+        print "User: " + str(userid) + " - Nick: "+ ", ".join (CNT_names[userid])
 
 print ""
 if len(KICK_0) > 0:
@@ -152,7 +166,6 @@ MOHACA = list() # list of userids that have attacked MOHACA's inappropriate armo
 JUKK = list() # list of userids that have attacked MOHACA's inappropriate armor
 with open(sys.argv[len(sys.argv)-1], 'rb') as f:
 	reader = csv.reader(f)
-	next(reader, None) # Skip the header
 	for row in reader:
 		Total = int(row[5])
 		TitanName = str(row[4])
