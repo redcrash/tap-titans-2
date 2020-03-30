@@ -41,7 +41,7 @@ for f in range(3, len(sys.argv)):
 	with open(sys.argv[f], 'rb') as f:
 		reader = csv.reader(f)
 		for row in reader:
-			# Use row[3] to identify when a new player is found
+			# Use row[3] to identify when a new player is found (i.e. TitanNumber == 0)
 			if int(row[2]) < MIN_ATTACKS and int(row[3]) == 0:
 				userid = row[1]
 				if userid in CNT_min_attacks:
@@ -67,7 +67,8 @@ for i in range(3, len(sys.argv)):
     with open(sys.argv[i], 'rb') as f:
             reader = csv.reader(f)
             for row in reader:
-                if int(row[2]) >= threshold and int(row[3]) == 0: # row[3] is the attack number, ignore if > 0
+                # Use row[3] to identify when a new player is found (i.e. TitanNumber == 0)
+                if int(row[2]) >= threshold and int(row[3]) == 0:
                     if row[1] not in CPT_names:
                         CPT_names[row[1]] = 1
                     else:
