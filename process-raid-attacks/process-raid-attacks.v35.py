@@ -151,6 +151,7 @@ if len(WARN) > 0:
 		print "User: " + str(userid) +" - Nick: "+ ", ".join (CNT_names[userid])
 	print ""
 
+sys.exit("Done")
 
 #
 # Check for inappropriate armor attacks. e.g. attacking STERL's arms/hands or MOHACA's torso is inappropiate because the
