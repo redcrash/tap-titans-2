@@ -22,6 +22,20 @@ if KICK_AT <= 0:
 	print "Hey! kick-at should be a positive value!"
 	sys.exit (0)
 
+for f in range(3, len(sys.argv)-1):
+    print "Processing file " + str(f)
+
+for f in range(len(sys.argv)-1, len(sys.argv)):
+    print "Processing file " + str(f) + " (last file)"
+
+LST_active_uids = list()
+for f in range(len(sys.argv)-1, len(sys.argv)):
+    with open (sys.argv[f], 'rb') as f:
+        reader = csv.reader (f)
+        for row in reader:
+            if row[1] not in LST_active_uids:
+                LST_active_uids.append (row[1])
+
 CNT_min_attacks = {} # dictionary [userid->#attacks] that have not surpassed MIN_ATTACKS at least 1
 CNT_names = {}       # dictionary [userid->list(nicks)]
 
@@ -33,7 +47,7 @@ for f in range(3, len(sys.argv)):
 			if row[0] in CNT_names:
 				CNT_names[ userid ].append (row[0])
 			else:
-				CNT_names[ userid ] = list() 
+				CNT_names[ userid ] = list()
 				CNT_names[ userid ].append (row[0])
 		f.close()
 
@@ -123,31 +137,46 @@ for userid, value in CPT_names.iteritems():
         print "User: " + str(userid) + " - Nick: "+ ", ".join (CNT_names[userid])
 
 print ""
-if len(KICK_0) > 0:
+KICK_0_active = list(set(KICK_0) & set(LST_active_uids))
+if len(KICK_0_active) > 0:
 	print "Users to be kicked because double 0 attack."
 	print "---"
-	for userid in KICK_0:
+	for userid in KICK_0_active:
 		print "User: "+ str(userid) +" - Nick:"+ ",".join (CNT_names[userid])
+		if userid in KICK:
+                    KICK.remove(userid)
+		if userid in WARN_0:
+                    WARN_0.remove(userid)
+		if userid in WARN:
+                    WARN.remove(userid)
 	print ""
 
-if len(WARN_0) > 0:
-	print "Users to be warned because last 0 attack."
-	print "---"
-	for userid in WARN_0:
-		print "User: "+ str(userid) +" - Nick:"+ ",".join (CNT_names[userid])
-	print ""
-
-if len(KICK) > 0:
+KICK_active = list(set(KICK) & set(LST_active_uids))
+if len(KICK_active) > 0:
 	print "Users to be kicked because failed to attack "+str(MIN_ATTACKS)+" times in "+str(KICK_AT)+" raids:"
 	print "---"
-	for userid in KICK:
+	for userid in KICK_active:
 		print "User: " + str(userid) +" - Nick: "+ ", ".join (CNT_names[userid])
+		if userid in WARN_0:
+                    WARN_0.remove(userid)
+		if userid in WARN:
+                    WARN.remove(userid)
 	print ""
 
-if len(WARN) > 0:
+WARN_0_active = list(set(WARN_0) & set(LST_active_uids))
+if len(WARN_0_active) > 0:
+	print "Users to be warned because last 0 attack."
+	print "---"
+	for userid in WARN_0_active:
+		print "User: "+ str(userid) +" - Nick:"+ ",".join (CNT_names[userid])
+		if userid in WARN:
+                    WARN.remove(userid)
+	print ""
+WARN_active = list(set(WARN) & set(LST_active_uids))
+if len(WARN_active) > 0:
 	print "Users to be warned because failed to attack "+str(MIN_ATTACKS)+" times in "+str(WARN_AT)+" raids:"
 	print "---"
-	for userid in WARN:
+	for userid in WARN_active:
 		print "User: " + str(userid) +" - Nick: "+ ", ".join (CNT_names[userid])
 	print ""
 
