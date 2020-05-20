@@ -23,10 +23,8 @@ if KICK_AT <= 0:
 	sys.exit (0)
 
 for f in range(3, len(sys.argv)-1):
-    print "Processing file " + str(f)
-
-for f in range(len(sys.argv)-1, len(sys.argv)):
-    print "Processing file " + str(f) + " (last file)"
+    print "Processing file " + str(sys.argv[f])
+print "Processing file " + str(sys.argv[len(sys.argv)-1]) + " (last file)"
 
 LST_active_uids = list()
 for f in range(len(sys.argv)-1, len(sys.argv)):
