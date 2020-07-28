@@ -35,6 +35,7 @@ for f in range(len(sys.argv)-1, len(sys.argv)):
                 LST_active_uids.append (row[1])
 
 CNT_min_attacks = {} # dictionary [userid->#attacks] that have not surpassed MIN_ATTACKS at least 1
+CNT_last_attacks = {} # dictionary [userid->#attacks] attacks done in the last raid
 CNT_names = {}       # dictionary [userid->list(nicks)]
 
 for f in range(3, len(sys.argv)):
@@ -49,6 +50,15 @@ for f in range(3, len(sys.argv)):
 				CNT_names[ userid ].append (row[0])
 		f.close()
 
+with open(sys.argv[len(sys.argv)-1], 'rb') as f:
+    reader = csv.reader(f)
+    for row in reader:
+        # Use row[3] to identify when a new player is found (i.e. TitanNumber == 0)
+        if int(row[3]) == 0:
+            userid = row[1]
+            CNT_last_attacks[ userid ] = int(row[2])
+    f.close()
+
 for f in range(3, len(sys.argv)):
 	with open(sys.argv[f], 'rb') as f:
 		reader = csv.reader(f)
@@ -61,6 +71,7 @@ for f in range(3, len(sys.argv)):
 				else:
 					CNT_min_attacks[ userid ] = 1
 		f.close()
+
 
 # Check promotions to Captain
 # Knights are promoted to Captain if a player reaches the max number of attacks in a raid
@@ -122,10 +133,12 @@ with open(sys.argv[len(sys.argv)-1], 'rb') as f:
 KICK = list() # list of userids that have not attacked at least KICK_AT
 WARN = list() # list of userids that deserve a warning
 for userid, v in CNT_min_attacks.iteritems():
-	if v == KICK_AT and userid not in KICK_0:
-		KICK.append (userid)
-	if v == WARN_AT and userid not in KICK_0 and userid not in WARN_0:
-		WARN.append (userid)
+    if v == KICK_AT and userid not in KICK_0:
+        KICK.append (userid)
+    if v == WARN_AT and userid not in KICK_0 and userid not in WARN_0:
+        # Do not warn if the user did more attack than the required attacks
+        if CNT_last_attacks[userid] < MIN_ATTACKS:
+            WARN.append (userid)
 
 print ""
 print "Users that shall be promoted to Captain:"
