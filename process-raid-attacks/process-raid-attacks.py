@@ -137,7 +137,7 @@ for userid, v in CNT_min_attacks.iteritems():
         KICK.append (userid)
     if v == WARN_AT and userid not in KICK_0 and userid not in WARN_0:
         # Do not warn if the user did more attack than the required attacks
-        if CNT_last_attacks[userid] < MIN_ATTACKS:
+        if userid in CNT_last_attacks and CNT_last_attacks[userid] < MIN_ATTACKS:
             WARN.append (userid)
 
 print ""
